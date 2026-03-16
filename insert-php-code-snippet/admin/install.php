@@ -129,6 +129,23 @@ PRIMARY KEY (`id`)
   									)
   		);
   	}
+      $table_name      = $wpdb->prefix . 'xyz_ips_usage';
+      $charset_collate = $wpdb->get_charset_collate();
+      // dbDelta is VERY picky about formatting.
+      $sql = "CREATE TABLE {$table_name} (
+          post_id BIGINT(20) UNSIGNED NOT NULL,
+          snippet_id BIGINT(20) UNSIGNED NOT NULL,
+          post_type VARCHAR(20) NOT NULL,
+          PRIMARY KEY  (post_id, snippet_id),
+          KEY post_id (post_id),
+          KEY snippet_id (snippet_id)
+      ) {$charset_collate};";
+      require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+      dbDelta($sql);
+      // Set sync flag only if not already set
+      if (get_option('xyz_ips_sync_needed') === false) {
+          add_option('xyz_ips_sync_needed', 1);
+      }
 }
 register_activation_hook( XYZ_INSERT_PHP_PLUGIN_FILE ,'xyz_ips_network_install');
 ?>

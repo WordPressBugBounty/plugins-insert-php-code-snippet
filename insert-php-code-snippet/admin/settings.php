@@ -107,7 +107,7 @@ if($_POST){
                 <table class="widefat"  style="width:99%;">
                     <tr valign="top">
                         <td scope="row" >
-                            <label for="xyz_ihs_sort">Sorting of snippets</label>
+                            <label for="xyz_ips_sort">Sorting of snippets</label>
                         </td>
                         <td>
                             <select id="xyz_ips_sort_by_field" name="xyz_ips_sort_by_field"  >

@@ -161,4 +161,65 @@ function xyz_ips_preview_page( $content ) {
 
 add_filter( 'the_content', 'xyz_ips_preview_page' );
 
+if(!function_exists('xyz_ips_get_insertion_location_label')){
+function xyz_ips_get_insertion_location_label($value) {
+    $map = array_flip(XYZ_IPS_INSERTION_LOCATION);
+    if (!isset($map[$value])) {
+        return '';
+    }
+    // Convert constant-style key to readable text
+    return ucwords(strtolower(str_replace('_', ' ', $map[$value])));
+}
+}
+if(!function_exists('xyz_ips_get_shortcode_usage_count')){
+// Get shortcode usage count (admin-only)
+function xyz_ips_get_shortcode_usage_count($snippet_title) {
+    global $wpdb;
+    $shortcode = '[xyz-ips snippet="' . esc_sql($snippet_title) . '"';
+    $query = $wpdb->prepare(
+        "SELECT COUNT(ID)
+         FROM {$wpdb->posts}
+         WHERE post_status = 'publish'
+         AND post_content LIKE %s",
+        '%' . $wpdb->esc_like($shortcode) . '%'
+    );
+    return (int) $wpdb->get_var($query);
+}
+}
+if(!function_exists('xyz_ips_update_usage_for_post')){
+// --- Tracking Logic ---
+function xyz_ips_update_usage_for_post($post_id, $content, $post_type = 'post') {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'xyz_ips_usage';
+    if (strpos($content, '[xyz-ips') === false) {
+        $wpdb->delete($table_name, ['post_id' => $post_id]);
+        return;
+    }
+    $wpdb->delete($table_name, ['post_id' => $post_id]);
+    preg_match_all('/\[xyz-ips([^\]]*)\]/', $content, $shortcodes);
+    $titles = [];
+    if (!empty($shortcodes[1])) {
+        foreach ($shortcodes[1] as $attr_string) {
+            $atts = shortcode_parse_atts($attr_string);
+            if (!empty($atts['snippet'])) {
+                $titles[] = $atts['snippet'];
+            }
+        }
+    }
+    $unique_snippets = array_unique($titles);
+    foreach ($unique_snippets as $title) {
+        $s_id = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}xyz_ips_short_code WHERE title = %s",
+            $title
+        ));
+        if ($s_id) {
+            $wpdb->insert($table_name, [
+                'post_id'    => $post_id,
+                'snippet_id' => $s_id,
+                'post_type'  => $post_type
+            ]);
+        }
+    }
+}
+}
 ?>
