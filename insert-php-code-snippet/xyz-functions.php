@@ -79,11 +79,12 @@ if(!function_exists('xyz_trim_deep'))
 		if ( is_array($value) ) {
 			$value = array_map('xyz_trim_deep', $value);
 		} elseif ( is_object($value) ) {
-			$vars = get_object_vars( $value );
-			foreach ($vars as $key=>$data) {
+    
+            foreach (get_object_vars($value) as $key => $data) {
 				$value->{$key} = xyz_trim_deep( $data );
 			}
-		} else {
+    
+        } elseif (is_string($value)) {
 			$value = trim($value);
 		}
 
@@ -195,7 +196,10 @@ function xyz_ips_update_usage_for_post($post_id, $content, $post_type = 'post') 
     if (!empty($shortcodes[1])) {
         foreach ($shortcodes[1] as $attr_string) {
             $atts = shortcode_parse_atts($attr_string);
-            if (!empty($atts['snippet'])) {
+           // if (!empty($atts['snippet'])) 
+            // PHP 8.3 Compliance Fix: Ensure $atts is an array before checking the 'snippet' key
+            if (is_array($atts) && !empty($atts['snippet']))
+            {
                 $titles[] = $atts['snippet'];
             }
         }
